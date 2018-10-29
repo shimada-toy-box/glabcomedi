@@ -13,6 +13,7 @@ module DeploymentPlatform
 
   def find_deployment_platform(environment)
     find_cluster_platform_kubernetes(environment: environment) ||
+      find_group_cluster_platform_kubernetes(environment: environment) ||
       find_kubernetes_service_integration ||
       build_cluster_and_deployment_platform
   end
@@ -21,6 +22,12 @@ module DeploymentPlatform
   def find_cluster_platform_kubernetes(environment: nil)
     clusters.enabled.default_environment
       .last&.platform_kubernetes
+  end
+
+  # EE would override this and utilize environment argument
+  def find_group_cluster_platform_kubernetes(environment: nil)
+    group_clusters(Clusters::Cluster.enabled.default_environment)
+      .first&.platform_kubernetes
   end
 
   def find_kubernetes_service_integration
@@ -56,5 +63,9 @@ module DeploymentPlatform
       token: kubernetes_service_template.token,
       namespace: kubernetes_service_template.namespace
     }
+  end
+
+  def group_clusters(cluster_scope)
+    Clusters::Cluster.belonging_to_parent_group_of_project(id, cluster_scope)
   end
 end

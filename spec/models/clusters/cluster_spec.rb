@@ -231,6 +231,52 @@ describe Clusters::Cluster do
     end
   end
 
+  describe '.belonging_to_parent_group_of_project' do
+    subject { described_class.belonging_to_parent_group_of_project(project.id) }
+
+    let(:group_cluster) { create(:cluster, :provided_by_gcp, :group) }
+    let(:group) { group_cluster.group }
+
+    context 'group has a configured kubernetes cluster' do
+      let(:project) { create(:project, group: group) }
+
+      it 'returns the group cluster' do
+        expect(subject).to eq([group_cluster])
+      end
+    end
+
+    context 'when sub-group has configured kubernetes cluster', :postgresql do
+      let(:sub_group_cluster) { create(:cluster, :provided_by_gcp, :group) }
+      let(:sub_group) { sub_group_cluster.group }
+      let(:project) { create(:project, group: sub_group) }
+
+      before do
+        sub_group.update!(parent: group)
+      end
+
+      it 'retuns clusters in order, ascending the hierachy' do
+        expect(subject).to eq([sub_group_cluster, group_cluster])
+      end
+    end
+
+    context 'sub-group created first', :postgresql do
+      let!(:sub_group_cluster) { create(:cluster, :provided_by_gcp, :group) }
+      let(:sub_sub_group_cluster) { create(:cluster, :provided_by_gcp, :group) }
+      let(:sub_group) { sub_group_cluster.group }
+      let(:sub_sub_group) { sub_sub_group_cluster.group }
+      let(:project) { create(:project, group: sub_sub_group) }
+
+      before do
+        sub_sub_group.update!(parent: sub_group)
+        sub_group.update!(parent: group)
+      end
+
+      it 'retuns clusters in order, ascending the hierachy' do
+        expect(subject).to eq([sub_sub_group_cluster, sub_group_cluster, group_cluster])
+      end
+    end
+  end
+
   describe '#provider' do
     subject { cluster.provider }
 
