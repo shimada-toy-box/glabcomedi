@@ -237,6 +237,14 @@ describe Clusters::Cluster do
     let(:group_cluster) { create(:cluster, :provided_by_gcp, :group) }
     let(:group) { group_cluster.group }
 
+    context 'project does not belong to this group' do
+      let(:project) { create(:project, group: create(:group)) }
+
+      it 'returns nothing' do
+        expect(subject).to be_empty
+      end
+    end
+
     context 'group has a configured kubernetes cluster' do
       let(:project) { create(:project, group: group) }
 
