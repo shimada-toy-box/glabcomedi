@@ -45,10 +45,10 @@ module Gitlab
     # Passing an `upto` will stop the recursion once the specified parent_id is
     # reached. So all ancestors *lower* than the specified acestor will be
     # included.
-    def base_and_ancestors(upto: nil)
+    def base_and_ancestors(upto: nil, depth_column: false)
       return ancestors_base unless Group.supports_nested_groups?
 
-      read_only(base_and_ancestors_cte(upto).apply_to(model.all))
+      read_only(base_and_ancestors_cte(upto, depth_column).apply_to(model.all))
     end
 
     # Returns a relation that includes the descendants_base set of groups
@@ -107,16 +107,21 @@ module Gitlab
     private
 
     # rubocop: disable CodeReuse/ActiveRecord
-    def base_and_ancestors_cte(stop_id = nil)
+    def base_and_ancestors_cte(stop_id = nil, depth_column = false)
       cte = SQL::RecursiveCTE.new(:base_and_ancestors)
 
-      cte << ancestors_base.except(:order)
+      base_query = ancestors_base.except(:order)
+      base_query = base_query.select('1 AS depth', groups_table[Arel.star]) if depth_column
+
+      cte << base_query
 
       # Recursively get all the ancestors of the base set.
       parent_query = model
         .from([groups_table, cte.table])
         .where(groups_table[:id].eq(cte.table[:parent_id]))
         .except(:order)
+
+      parent_query = parent_query.select(cte.table[:depth] + 1, groups_table[Arel.star]) if depth_column
       parent_query = parent_query.where(cte.table[:parent_id].not_eq(stop_id)) if stop_id
 
       cte << parent_query

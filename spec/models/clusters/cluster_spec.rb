@@ -255,7 +255,7 @@ describe Clusters::Cluster do
       end
 
       it 'retuns clusters in order, ascending the hierachy' do
-        expect(subject).to eq([sub_group_cluster, group_cluster])
+        expect(subject).to eq([group_cluster, sub_group_cluster])
       end
     end
 
@@ -272,7 +272,7 @@ describe Clusters::Cluster do
       end
 
       it 'retuns clusters in order, ascending the hierachy' do
-        expect(subject).to eq([sub_sub_group_cluster, sub_group_cluster, group_cluster])
+        expect(subject).to eq([group_cluster, sub_group_cluster, sub_sub_group_cluster])
       end
     end
   end

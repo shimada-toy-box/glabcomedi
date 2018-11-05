@@ -34,6 +34,16 @@ describe Gitlab::GroupHierarchy, :postgresql do
       expect { relation.update_all(share_with_group_lock: false) }
         .to raise_error(ActiveRecord::ReadOnlyRecord)
     end
+
+    context 'with depth column' do
+      let(:relation) do
+        described_class.new(Group.where(id: child2.id)).base_and_ancestors(depth_column: true)
+      end
+
+      it 'includes a depth column' do
+        expect(relation.order(:depth).map(&:depth)).to eq([1, 2, 3])
+      end
+    end
   end
 
   describe '#base_and_descendants' do
