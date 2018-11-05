@@ -108,6 +108,16 @@ describe DeploymentPlatform do
           expect(subject).to eq(sub_sub_group_cluster.platform_kubernetes)
         end
       end
+
+      context 'feature flag disabled' do
+        before do
+          stub_feature_flags(deploy_group_clusters: false)
+        end
+
+        it 'returns nil' do
+          expect(subject).to be_nil
+        end
+      end
     end
 
     context 'when user configured kubernetes integration from project services' do
