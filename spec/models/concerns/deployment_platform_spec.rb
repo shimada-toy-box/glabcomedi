@@ -69,6 +69,8 @@ describe DeploymentPlatform do
       let(:group) { group_cluster.group }
 
       before do
+        stub_feature_flags(deploy_group_clusters: true)
+
         project.update!(group: group)
       end
 

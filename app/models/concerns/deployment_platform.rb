@@ -13,7 +13,7 @@ module DeploymentPlatform
 
   def find_deployment_platform(environment)
     find_cluster_platform_kubernetes(environment: environment) ||
-      find_group_cluster_platform_kubernetes(environment: environment) ||
+      (Feature.enabled?(:deploy_group_clusters) && find_group_cluster_platform_kubernetes(environment: environment)) ||
       find_kubernetes_service_integration ||
       build_cluster_and_deployment_platform
   end
