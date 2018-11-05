@@ -65,6 +65,9 @@ export default {
     deployedText() {
       return this.$options.deployedTextMap[this.deployment.status];
     },
+    isDeployInProgress() {
+      return this.deployment.status === 'running';
+    },
     shouldRenderDropdown() {
       return (
         this.enableCiEnvironmentsStatusChanges &&
@@ -183,15 +186,35 @@ export default {
                 css-class="js-deploy-url js-deploy-url-feature-flag deploy-link btn btn-default btn-sm inlin"
               />
             </template>
-            <loading-button
-              v-if="deployment.stop_url"
-              :loading="isStopping"
-              container-class="btn btn-default btn-sm inline prepend-left-4"
-              title="Stop environment"
-              @click="stopEnvironment"
-            >
-              <icon name="stop" />
-            </loading-button>
+            <template v-if="deployment.stop_url">
+              <span 
+                v-if="isDeployInProgress" 
+                v-tooltip 
+                :title="__('Stopping this environment is currently not possible as a deployment is in progress')"
+                class="d-inline-block" 
+                tabindex="0"
+              >
+                <loading-button
+                  :loading="isStopping"
+                  :disabled="isDeployInProgress"
+                  container-class="js-stop-env btn btn-default btn-sm inline prepend-left-4"
+                  style="pointer-events: none;"
+                  @click="stopEnvironment"
+                >
+                  <icon name="stop" />
+                </loading-button>
+              </span>
+              <loading-button
+                v-else
+                v-tooltip
+                :title="__('Stop environment')"
+                :loading="isStopping"
+                container-class="btn btn-default btn-sm inline prepend-left-4"
+                @click="stopEnvironment"
+              >
+                <icon name="stop" />
+              </loading-button>
+            </template>
           </div>
         </div>
       </div>
